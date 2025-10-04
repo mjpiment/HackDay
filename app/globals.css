@@ -1,0 +1,12 @@
+/* globals.css */
+
+/* Ensure smooth theme transitions */
+html {
+  transition-property: background-color, color;
+  transition-duration: 300ms;
+  transition-timing-function: ease-in-out;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
