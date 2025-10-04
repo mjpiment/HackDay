@@ -2,7 +2,19 @@
 
 import { useState, useMemo } from 'react';
 
-// --- Types ---
+// Define the 7 different pastel colors using Tailwind classes
+const PASTEL_COLORS = [
+  'bg-pink-200 hover:bg-pink-300 text-pink-900',
+  'bg-blue-200 hover:bg-blue-300 text-blue-900',
+  'bg-green-200 hover:bg-green-300 text-green-900',
+  'bg-yellow-200 hover:bg-yellow-300 text-yellow-900',
+  'bg-purple-200 hover:bg-purple-300 text-purple-900',
+  'bg-red-200 hover:bg-red-300 text-red-900',
+  'bg-indigo-200 hover:bg-indigo-300 text-indigo-900',
+];
+
+// --- Types and Helpers ---
+
 interface Task {
   id: number;
   text: string;
@@ -11,17 +23,32 @@ interface Task {
   dueDate: string;   // Stored as "YYYY-MM-DD"
 }
 
+// Helper function to create a date object safely at local noon to avoid timezone issues
+// This ensures that comparison and formatting are reliable.
+const getDateObject = (dateStr: string) => {
+    // Adding 'T12:00:00' forces the date to be interpreted at noon local time, 
+    // preventing shifts due to UTC/local midnight differences.
+    return new Date(dateStr + 'T12:00:00'); 
+};
+
 // Helper function to format HH:MM (military) to 12-hour AM/PM
 const formatTime12Hour = (time24: string): string => {
   if (!time24) return '';
   const [hours, minutes] = time24.split(':').map(Number);
   const period = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = hours % 12 || 12; // Convert 0 to 12
+  const hours12 = hours % 12 || 12; 
   return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
 };
 
 // Helper function to get the current date in YYYY-MM-DD format
 const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
+// Helper function to calculate the date 6 days from now (7 days total, including today)
+const getMaxTaskDateString = () => {
+  const today = getDateObject(getTodayDateString());
+  today.setDate(today.getDate() + 6); // Max date is 6 days from today
+  return today.toISOString().split('T')[0];
+};
 
 // Helper function to get the display name for a date
 const getDayDisplayName = (dateStr: string): string => {
@@ -29,13 +56,16 @@ const getDayDisplayName = (dateStr: string): string => {
   
   if (dateStr === todayStr) return 'Today';
 
-  const date = new Date(dateStr);
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  // Calculate Tomorrow's date string safely for comparison
+  const tomorrowDate = getDateObject(todayStr); 
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
 
   if (dateStr === tomorrowStr) return 'Tomorrow';
-
+  
+  // Use the date string to create a display date object
+  const date = getDateObject(dateStr); 
+  
   const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
   return date.toLocaleDateString('en-US', options);
 };
@@ -44,12 +74,22 @@ export default function TodoList() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskTime, setNewTaskTime] = useState('');
-  const [newTaskDate, setNewTaskDate] = useState(getTodayDateString()); // Default to today
-  const [selectedDate, setSelectedDate] = useState(getTodayDateString()); // State for the tabs
+  const [newTaskDate, setNewTaskDate] = useState(getTodayDateString());
+  const [selectedDate, setSelectedDate] = useState(getTodayDateString()); 
+  
+  // Max selectable date is Today + 6 days (7 days total)
+  const maxFutureDate = useMemo(() => getMaxTaskDateString(), []);
 
   const addTask = () => {
     if (newTaskText.trim() === '' || !newTaskDate) return;
     
+    // Check if the selected date is within the allowed 7-day range
+    if (newTaskDate > maxFutureDate) {
+        // You might want a better UI notification here instead of console.error
+        console.error("Task date cannot be more than 7 days ahead.");
+        return; 
+    }
+
     const newTask: Task = {
       id: Date.now(),
       text: newTaskText.trim(),
@@ -76,25 +116,37 @@ export default function TodoList() {
     setTasks(tasks.filter(task => task.id !== id));
   };
   
+  // Create a list of only the next 7 days for the tabs
+  const upcomingDates = useMemo(() => {
+    const dates = [];
+    const today = getDateObject(getTodayDateString());
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    return dates;
+  }, []);
+
   // --- Task Filtering and Sorting ---
   const filteredAndSortedTasks = useMemo(() => {
-    // 1. Filter tasks for the selected date tab
     const filtered = tasks.filter(task => task.dueDate === selectedDate);
     
     const sorted = [...filtered].sort((a, b) => {
       const timeA = a.dueTime;
       const timeB = b.dueTime;
 
-      // Completed tasks go to the bottom
+      // 1. Completed tasks go to the bottom
       if (a.completed !== b.completed) {
         return a.completed ? 1 : -1;
       }
 
-      // Prioritize timed tasks over untimed ones
+      // 2. Prioritize timed tasks over untimed ones
       if (timeA && !timeB) return -1;
       if (!timeA && timeB) return 1;
       
-      // Sort chronologically if both tasks have times
+      // 3. Sort chronologically if both tasks have times
       if (timeA && timeB) {
         if (timeA < timeB) return -1;
         if (timeA > timeB) return 1;
@@ -105,31 +157,7 @@ export default function TodoList() {
     return sorted;
   }, [tasks, selectedDate]);
   
-  // Create a list of upcoming dates for the tabs
-  const upcomingDates = useMemo(() => {
-    const dates = new Set<string>();
-    const today = new Date();
-    
-    // Add Today and the next 6 days
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.add(date.toISOString().split('T')[0]);
-    }
-    
-    // Add any dates from existing tasks not in the 7-day window
-    tasks.forEach(task => dates.add(task.dueDate));
-
-    const sortedDates = Array.from(dates).sort((a, b) => {
-      if (a < b) return -1;
-      if (a > b) return 1;
-      return 0;
-    });
-    
-    return sortedDates.filter(date => date >= getTodayDateString());
-  }, [tasks]);
-
-  // Separate tasks for rendering in the selected day view
+  // Separate tasks for rendering
   const timedTasks = filteredAndSortedTasks.filter(t => t.dueTime && !t.completed);
   const untimedTasks = filteredAndSortedTasks.filter(t => !t.dueTime && !t.completed);
   const completedTasks = filteredAndSortedTasks.filter(t => t.completed);
@@ -183,7 +211,7 @@ export default function TodoList() {
   return (
     <div className="p-8 max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-2xl mt-12 transition-colors duration-300 todo-card">
       
-      {/* Bouncing Banana Emoji Icon and Title (already centered via parent/mx-auto) */}
+      {/* Header and Title */}
       <div className="flex justify-center mb-4">
         <span 
           role="img" 
@@ -197,30 +225,38 @@ export default function TodoList() {
         My Task Manager
       </h1>
       
-      {/* Date Tabs Selection - NEW GRID LAYOUT (4 per row) */}
-      <div className="mb-6 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
-        <div className="grid grid-cols-4 gap-2"> 
-          {upcomingDates.slice(0, 7).map(dateStr => (
-            <button
-              key={dateStr}
-              onClick={() => setSelectedDate(dateStr)}
-              className={`
-                inline-block py-2 rounded-lg text-sm font-medium transition-all duration-200 
-                ${dateStr === selectedDate
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }
-              `}
-            >
-              {getDayDisplayName(dateStr)}
-            </button>
-          ))}
+      {/* Date Tabs Selection - Centered 4x3 Grid Layout */}
+      <div className="flex justify-center mb-6"> 
+        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
+          <div className="grid grid-cols-4 gap-2"> 
+            {upcomingDates.map((dateStr, index) => {
+              const isSelected = dateStr === selectedDate;
+              // Use pastel colors based on index
+              const colorClasses = PASTEL_COLORS[index]; 
+
+              return (
+                <button
+                  key={dateStr}
+                  onClick={() => setSelectedDate(dateStr)}
+                  className={`
+                    inline-block py-2 rounded-lg text-sm font-medium transition-all duration-200 w-full
+                    ${isSelected
+                      ? 'bg-blue-600 text-white shadow-md' // Selected state (Blue)
+                      : colorClasses // Pastel color state
+                    }
+                  `}
+                >
+                  {getDayDisplayName(dateStr)}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Input Area (Task Text, Time, and Date) */}
       <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg mb-6 shadow-md">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Add New Task</h3>
+        <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Add New Task (7-Day Limit)</h3>
         <div className="flex space-x-2 mb-3">
           <input
             type="text"
@@ -237,7 +273,8 @@ export default function TodoList() {
             onChange={(e) => setNewTaskDate(e.target.value)}
             className="p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             aria-label="Task Due Date"
-            min={getTodayDateString()}
+            min={getTodayDateString()} // Cannot select past dates
+            max={maxFutureDate}      // Cannot select more than 7 days ahead
           />
           <input 
             type="time" 
@@ -259,7 +296,7 @@ export default function TodoList() {
       <h2 className="text-2xl font-extrabold mb-4 text-gray-900 dark:text-white">{getDayDisplayName(selectedDate)} Tasks</h2>
 
       {filteredAndSortedTasks.length === 0 ? (
-          <p className="text-center text-gray-500 p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-700">
+          <p className="text-center text-gray-500 p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 dark:text-gray-400 dark:border-gray-600 dark:bg-gray-700">
               No tasks scheduled for {getDayDisplayName(selectedDate)}.
           </p>
       ) : (
