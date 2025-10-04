@@ -1,17 +1,37 @@
 'use client'; // This component must be a Client Component to use state and hooks
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Define the type for a single task
-interface Task {
+export interface Task {
   id: number;
   text: string;
   completed: boolean;
 }
 
-export default function TodoList() {
+interface TodoListProps {
+  onTasksChange?: (tasks: Task[]) => void;
+}
+
+export default function TodoList({ onTasksChange }: TodoListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
+
+  // Load tasks from localStorage on component mount
+  useEffect(() => {
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      const parsedTasks = JSON.parse(savedTasks);
+      setTasks(parsedTasks);
+      onTasksChange?.(parsedTasks);
+    }
+  }, [onTasksChange]);
+
+  // Save tasks to localStorage and notify parent whenever tasks change
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    onTasksChange?.(tasks);
+  }, [tasks, onTasksChange]);
 
   const addTask = () => {
     if (newTaskText.trim() === '') return;
