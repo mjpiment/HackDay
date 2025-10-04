@@ -227,8 +227,9 @@ export default function TodoList() {
       
       {/* Date Tabs Selection - Centered 4x3 Grid Layout */}
       <div className="flex justify-center mb-6"> 
-        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
-          <div className="grid grid-cols-4 gap-2"> 
+        {/* Adjusted padding (p-3) and increased gap (gap-3) for a wider feel */}
+        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner"> 
+          <div className="grid grid-cols-4 gap-3"> 
             {upcomingDates.map((dateStr, index) => {
               const isSelected = dateStr === selectedDate;
               // Use pastel colors based on index
@@ -239,7 +240,7 @@ export default function TodoList() {
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr)}
                   className={`
-                    inline-block py-2 rounded-lg text-sm font-medium transition-all duration-200 w-full
+                    inline-block py-3 rounded-lg text-sm font-medium transition-all duration-200 w-full 
                     ${isSelected
                       ? 'bg-blue-600 text-white shadow-md' // Selected state (Blue)
                       : colorClasses // Pastel color state
