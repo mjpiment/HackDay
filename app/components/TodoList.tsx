@@ -227,8 +227,10 @@ export default function TodoList() {
       
       {/* Date Tabs Selection - Centered 4x3 Grid Layout */}
       <div className="flex justify-center mb-6"> 
-        {/* Adjusted padding (p-3) and increased gap (gap-3) for a wider feel */}
-        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner"> 
+        {/* FIX: Changed bg-gray-50 to bg-gray-100 and removed the fixed light mode color. 
+                The dark:bg-gray-700 class now handles dark mode, and the slug mode 
+                override in global.css will take effect on the bg-gray-100 class. */}
+        <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-inner"> 
           <div className="grid grid-cols-4 gap-3"> 
             {upcomingDates.map((dateStr, index) => {
               const isSelected = dateStr === selectedDate;
