@@ -1,6 +1,7 @@
 'use client'; 
 
 import { useState, useMemo } from 'react';
+import ChatWrapper from './ChatWrapper';
 
 // Define the 7 different pastel colors using Tailwind classes
 const PASTEL_COLORS = [
@@ -209,7 +210,8 @@ export default function TodoList() {
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-2xl mt-12 transition-colors duration-300 todo-card">
+    <>
+      <div className="p-8 max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-2xl mt-12 transition-colors duration-300 todo-card">
       
       {/* Header and Title */}
       <div className="flex justify-center mb-4">
@@ -314,6 +316,15 @@ export default function TodoList() {
               {renderTasks(completedTasks, 'Completed')}
           </>
       )}
-    </div>
+      </div>
+      
+      {/* Chat Wrapper */}
+      <ChatWrapper 
+        tasks={tasks}
+        selectedDate={selectedDate}
+        onTaskComplete={toggleComplete}
+        onTaskDelete={deleteTask}
+      />
+    </>
   );
 }

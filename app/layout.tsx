@@ -48,7 +48,7 @@ export default function RootLayout({
                     <ThemeSwitcher /> {/* Theme Toggle Button */}
                 </nav>
 
-                <main className="p-4 max-w-7xl mx-auto">
+                <main className="p-4 max-w-7xl mx-auto relative">
                     {children}
                 </main>
             </body>
