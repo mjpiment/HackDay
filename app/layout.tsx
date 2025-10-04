@@ -24,7 +24,7 @@ export default function RootLayout({
               href="/"
               className="hover:text-blue-400 transition duration-150 text-xl font-medium"
             >
-              My To-Do App (Home)
+              Task Manager
             </Link>
 
             {/* Calendar tab (points to /calendar) */}
