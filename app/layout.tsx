@@ -32,7 +32,7 @@ export default function RootLayout({
                             My To-Do App (Home)
                         </Link>
                         <Link href="/about" className="hover:text-blue-400 transition duration-150 text-xl font-medium">
-                            About/Settings
+                            Calendar
                         </Link>
                     </div>
                     <ThemeSwitcher /> {/* Theme Toggle Button */}
