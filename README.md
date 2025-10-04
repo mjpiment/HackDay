@@ -1,4 +1,4 @@
-# Frontend Developer Light Portfolio Template
+# SluHub
 
 [Demo](https://www.devportfoliotemplates.com/portfolio-templates/frontend-developer-light)
 
