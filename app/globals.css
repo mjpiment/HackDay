@@ -1,6 +1,4 @@
-/* globals.css */
-
-/* Ensure smooth theme transitions */
+/* Ensure smooth theme transitions for the entire page */
 html {
   transition-property: background-color, color;
   transition-duration: 300ms;
@@ -10,3 +8,44 @@ html {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* --- SLUG MODE CUSTOM STYLES --- */
+
+/* 1. Targets the whole page background when 'slug' class is on <html> */
+html.slug {
+  background-color: #FEEFAD; /* Yellow background */
+  color: #333; /* Dark text for readability */
+}
+
+/* 2. Targets the main To-Do List card (using the .todo-card class in TodoList.tsx) */
+html.slug .todo-card {
+  background-color: #FFF6C3 !important; /* Lighter yellow for the card */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. Overrides default gray backgrounds on elements like the input area and date tabs */
+html.slug .bg-gray-100,
+html.slug .bg-gray-50 {
+  background-color: #FFEE99 !important;
+}
+
+/* Overrides dark mode inputs/tabs background in Slug mode (using escaped colon: \:) */
+html.slug .dark\:bg-gray-700 {
+  background-color: #FFF6C3 !important; 
+}
+/* Overrides dark mode body background in Slug mode */
+html.slug .dark\:bg-gray-900 {
+  background-color: #FEEFAD !important; 
+}
+
+/* 4. Ensures dark mode text and element colors are overridden for Slug mode */
+html.slug .text-gray-900,
+html.slug .dark\:text-white,
+html.slug h1, html.slug h2, html.slug h3 {
+  color: #333 !important;
+}
+html.slug input {
+  background-color: #FFF !important;
+  color: #333 !important;
+  border-color: #FDD835 !important;
+}
