@@ -2,15 +2,25 @@
 
 import { useState } from 'react';
 
-interface Task {
+export interface Task {
   id: number;
   text: string;
   completed: boolean;
 }
 
-export default function TodoList() {
+interface TodoListProps {
+  onTasksChange?: (tasks: Task[]) => void;
+}
+
+export default function TodoList({ onTasksChange }: TodoListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
+
+  // Notify parent component when tasks change
+  const updateTasks = (newTasks: Task[]) => {
+    setTasks(newTasks);
+    onTasksChange?.(newTasks);
+  };
 
   const addTask = () => {
     if (newTaskText.trim() === '') return;
@@ -19,12 +29,12 @@ export default function TodoList() {
       text: newTaskText.trim(),
       completed: false,
     };
-    setTasks([...tasks, newTask]);
+    updateTasks([...tasks, newTask]);
     setNewTaskText('');
   };
 
   const toggleComplete = (id: number) => {
-    setTasks(
+    updateTasks(
       tasks.map(task => 
         task.id === id ? { ...task, completed: !task.completed } : task
       )
@@ -32,7 +42,7 @@ export default function TodoList() {
   };
 
   const deleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id));
+    updateTasks(tasks.filter(task => task.id !== id));
   };
 
   return (
